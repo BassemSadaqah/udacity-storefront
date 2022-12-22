@@ -112,7 +112,6 @@ jobs:
       - run:
           name: App Deploy
           command: |
-            cd frontend
             npm run frontend:deploy_staging
 
   deploy_frontend_prod:
@@ -126,7 +125,6 @@ jobs:
       - run:
           name: App Deploy
           command: |
-            cd frontend
             npm run frontend:deploy_prod
 workflows:
   version: 2
