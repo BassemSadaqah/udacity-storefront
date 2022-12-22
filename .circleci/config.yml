@@ -44,6 +44,8 @@ jobs:
     steps:
       - node/install
       - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
       - run:
           name: Installing Main dependencies
           command: |
