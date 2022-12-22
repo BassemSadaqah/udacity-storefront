@@ -138,14 +138,17 @@ workflows:
       - deploy_backend_staging:
           requires:
             - backend_build_test
-      - request_approval:
+      - request_frontend_deployment_approval:
           type: approval
           requires:
             - deploy_frontend_staging
+      - request_backend_deployment_approval:
+          type: approval
+          requires:
             - deploy_backend_staging
       - deploy_frontend_prod:
           requires:
-            - request_approval 
+            - request_frontend_deployment_approval 
       - deploy_backend_prod:
           requires:
-            - request_approval 
+            - request_backend_deployment_approval 
