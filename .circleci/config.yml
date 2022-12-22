@@ -22,6 +22,8 @@ jobs:
       - run:
           name: Linting
           command: |
+            ls
+            pwd
             npm run frontend:lint
       - run:
           name: App Build
@@ -53,6 +55,7 @@ jobs:
       - run:
           name: Linting
           command: |
+            ls
             npm run backend:lint
       - run:
           name: App Build
