@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "frontend:start": "cd frontend && npm run start",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:deploy": "aws s3 cp --recursive ./frontend/build s3://udacity-storeront-frontend-staging/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
