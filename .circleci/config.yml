@@ -1,0 +1,148 @@
+version: 2.1
+orbs:
+  node: circleci/node@4.1.0
+  aws-eb: circleci/aws-elastic-beanstalk@2.0.1
+
+jobs:
+  frontend_build_test :
+    docker:
+      - image: "cimg/base:stable"
+    steps:
+      - node/install
+      - checkout
+      - run:
+          name: Installing Main dependencies
+          command: |
+            npm install   
+      - run:
+          name: Installing Frontend dependencies
+          command: |
+            npm run frontend:install   
+      - run:
+          name: Linting
+          command: |
+            npm run frontend:lint
+      - run:
+          name: App Build
+          command: |
+            npm run frontend:build
+      - run:
+          name: Frontend Tests
+          command: |
+            npm run frontend:test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./*
+      
+jobs:
+  backend_build_test :
+    docker:
+      - image: "cimg/base:stable"
+    steps:
+      - node/install
+      - checkout
+      - run:
+          name: Installing Main dependencies
+          command: |
+            npm install   
+      - run:
+          name: Installing Backend dependencies
+          command: |
+            npm run backend:install   
+      - run:
+          name: Linting
+          command: |
+            npm run backend:lint
+      - run:
+          name: App Build
+          command: |
+            npm run backend:build
+      - run:
+          name: Jasmine Tests
+          command: |
+            npm run backend:test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./*
+      
+
+  deploy_backend_staging:
+    docker:
+      - image: "cimg/base:stable"
+    steps:
+      - attach_workspace:
+          at: ./
+      - aws-eb/setup
+      - run:
+          name: App Deploy
+          command: |
+            cd backend
+            eb init -p "Node.js 16 running on 64bit Amazon Linux 2" --region us-east-1 udacity-storefront-backend
+            eb deploy udacity-storefront-backend-staging
+            eb status
+
+  deploy_backend_prod:
+    docker:
+      - image: "cimg/base:stable"
+    steps:
+      - attach_workspace:
+          at: ./
+      - aws-eb/setup
+      - run:
+          name: App Deploy
+          command: |
+            cd backend
+            eb init -p "Node.js 16 running on 64bit Amazon Linux 2" --region us-east-1 udacity-storefront-backend
+            eb deploy udacity-storefront-backend-prod
+            eb status
+
+  deploy_frontend_staging:
+    docker:
+      - image: "cimg/base:stable"
+    steps:
+      - attach_workspace:
+          at: ./
+      - aws-cli/setup
+      - run:
+          name: App Deploy
+          command: |
+            cd frontend
+            npm run frontend:deploy_staging
+
+  deploy_frontend_prod:
+    docker:
+      - image: "cimg/base:stable"
+    steps:
+      - attach_workspace:
+          at: ./
+      - aws-cli/setup
+      - run:
+          name: App Deploy
+          command: |
+            cd frontend
+            npm run frontend:deploy_prod
+workflows:
+  version: 2
+  build-test-and-deploy:
+    jobs:
+      - frontend_build_test
+      - backend_build_test
+      - deploy_frontend_staging:
+          requires:
+            - frontend_build_test
+      - deploy_backend_staging:
+          requires:
+            - backend_build_test
+      - request_approval:
+          type: approval
+          requires:
+            - deploy_frontend_staging
+            - deploy_backend_staging
+      - deploy_frontend_prod:
+          requires:
+            - request_approval 
+      - deploy_backend_prod:
+          requires:
+            - request_approval 
