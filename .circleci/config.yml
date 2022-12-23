@@ -3,8 +3,12 @@ orbs:
   node: circleci/node@4.1.0
   aws-eb: circleci/aws-elastic-beanstalk@2.0.1
   aws-cli: circleci/aws-cli@3.1.4
+Branches:
+  only: 
+     -  main
 
 jobs:
+#Frontend job that run both of build and test scripts and presist the project folder
   frontend_build_test :
     docker:
       - image: "cimg/base:stable"
@@ -37,7 +41,8 @@ jobs:
           root: .
           paths:
             - ./*
-      
+
+#Backend job that run lint, test and build scripts and presist the project folder
   backend_build_test :
     docker:
       - image: "cimg/base:stable"
@@ -70,7 +75,8 @@ jobs:
           root: .
           paths:
             - ./*
-      
+
+#Deploy backend code to elastic beanstalk staging environment
   deploy_backend_staging:
     docker:
       - image: "cimg/base:stable"
@@ -82,10 +88,12 @@ jobs:
           name: App Deploy
           command: |
             cd backend
+            eb setenv env=staging DATABEASE_HOST=$DATABEASE_HOST DATABASE_NAME=$DATABASE_NAME DATABASE_USER=$DATABASE_USER DATABASE_PWD=$DATABASE_PWD DATABASE_PORT=$DATABASE_PORT DATABASE_NAME_TEST=$DATABASE_NAME_TEST BCRYPT_PWD=$BCRYPT_PWD SALT_ROUNDS=$SALT_ROUNDS JWT_SECRET=$JWT_SECRET
             eb init -p "Node.js 16 running on 64bit Amazon Linux 2" --region us-east-1 udacity-storefront-backend
             eb deploy udacity-storefront-backend-staging
             eb status
 
+#Deploy backend code to elastic beanstalk production environment
   deploy_backend_prod:
     docker:
       - image: "cimg/base:stable"
@@ -97,10 +105,12 @@ jobs:
           name: App Deploy
           command: |
             cd backend
+            eb setenv env=prod DATABEASE_HOST=$DATABEASE_HOST DATABASE_NAME=$DATABASE_NAME DATABASE_USER=$DATABASE_USER DATABASE_PWD=$DATABASE_PWD DATABASE_PORT=$DATABASE_PORT DATABASE_NAME_TEST=$DATABASE_NAME_TEST BCRYPT_PWD=$BCRYPT_PWD SALT_ROUNDS=$SALT_ROUNDS JWT_SECRET=$JWT_SECRET
             eb init -p "Node.js 16 running on 64bit Amazon Linux 2" --region us-east-1 udacity-storefront-backend
             eb deploy udacity-storefront-backend-prod
             eb status
 
+#Deploy frontend code to s3 staging bucket
   deploy_frontend_staging:
     docker:
       - image: "cimg/base:stable"
@@ -114,6 +124,7 @@ jobs:
           command: |
             npm run frontend:deploy_staging
 
+#Deploy frontend code to s3 production bucket
   deploy_frontend_prod:
     docker:
       - image: "cimg/base:stable"
@@ -126,6 +137,7 @@ jobs:
           name: App Deploy
           command: |
             npm run frontend:deploy_prod
+
 workflows:
   version: 2
   build-test-and-deploy:
